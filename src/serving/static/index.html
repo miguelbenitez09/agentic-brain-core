@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agentic Brain Core Studio | Visual Drag & Drop Multi-Agent Orchestrator</title>
+    <link rel="stylesheet" href="/static/css/studio.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body class="bg-dark text-slate-100">
+    <!-- Barra Superior -->
+    <header class="app-header">
+        <div class="header-brand">
+            <div class="brand-logo">🧠</div>
+            <div>
+                <h1 class="brand-title">Agentic Brain Core <span class="badge-version">v1.0.0</span></h1>
+                <p class="brand-sub">Visual Drag & Drop Multi-Agent Platform • Ing. Miguel Antonio Benítez González (UTP)</p>
+            </div>
+        </div>
+        <div class="header-actions">
+            <button id="btn-run-swarm" class="btn btn-primary">
+                <span class="icon">▶</span> Ejecutar Enjambre
+            </button>
+            <button id="btn-export-flow" class="btn btn-secondary">
+                <span class="icon">💾</span> Exportar Flujo
+            </button>
+            <button id="btn-clear-canvas" class="btn btn-ghost">
+                <span class="icon">🗑️</span> Limpiar
+            </button>
+            <div class="status-indicator">
+                <span class="pulse-dot"></span> Clúster Listo
+            </div>
+        </div>
+    </header>
+
+    <!-- Contenedor Principal de la Suite -->
+    <div class="studio-container">
+        <!-- Panel Lateral Izquierdo: Caja de Herramientas Arrastrables -->
+        <aside class="sidebar-toolbox">
+            <div class="section-title">Componentes Arrastrables</div>
+            <p class="section-hint">Arrastra nodos hacia el lienzo central para construir la topología del enjambre:</p>
+            
+            <div class="draggable-palette">
+                <!-- Nodo Agente -->
+                <div class="palette-item" draggable="true" data-type="agent" data-title="Agente Especialista" data-role="worker">
+                    <div class="item-icon bg-indigo">🤖</div>
+                    <div class="item-info">
+                        <strong>Nodo Agente</strong>
+                        <span>Instancia con Soul y Memoria</span>
+                    </div>
+                </div>
+
+                <!-- Nodo Supervisor -->
+                <div class="palette-item" draggable="true" data-type="supervisor" data-title="Agente Supervisor" data-role="supervisor">
+                    <div class="item-icon bg-purple">👑</div>
+                    <div class="item-info">
+                        <strong>Supervisor Swarm</strong>
+                        <span>Coordinador de Tareas y Delegación</span>
+                    </div>
+                </div>
+
+                <!-- Nodo Guardrail -->
+                <div class="palette-item" draggable="true" data-type="guardrail" data-title="Filtro Guardrails" data-role="security">
+                    <div class="item-icon bg-emerald">🛡️</div>
+                    <div class="item-info">
+                        <strong>Guardrail I/O</strong>
+                        <span>Anti-Injection, PII y Secretos</span>
+                    </div>
+                </div>
+
+                <!-- Nodo Memoria -->
+                <div class="palette-item" draggable="true" data-type="memory" data-title="Memoria Episódica" data-role="memory">
+                    <div class="item-icon bg-amber">💾</div>
+                    <div class="item-info">
+                        <strong>Memoria JSONL</strong>
+                        <span>Event Sourcing SHA-256</span>
+                    </div>
+                </div>
+
+                <!-- Nodo Herramienta -->
+                <div class="palette-item" draggable="true" data-type="tool" data-title="Herramienta RBAC" data-role="tool">
+                    <div class="item-icon bg-rose">⚡</div>
+                    <div class="item-info">
+                        <strong>Herramienta / Tool</strong>
+                        <span>Lector Docs, Shell o APIs</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Telemetría en Vivo del Clúster -->
+            <div class="cluster-telemetry-box mt-6">
+                <div class="section-title">Telemetría del Clúster</div>
+                <div class="telemetry-metric">
+                    <span>Agentes Registrados:</span>
+                    <strong id="stat-agents">3</strong>
+                </div>
+                <div class="telemetry-metric">
+                    <span>Carga / Esfuerzo Asignado:</span>
+                    <strong id="stat-effort">0 / 60 pts</strong>
+                </div>
+                <div class="telemetry-metric">
+                    <span>Utilización del Clúster:</span>
+                    <strong id="stat-utilization">0.0%</strong>
+                </div>
+                <div class="progress-bar-bg mt-2">
+                    <div id="progress-cluster-load" class="progress-bar-fill" style="width: 0%;"></div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Área Central: Lienzo Drag & Drop con Cables SVG -->
+        <main class="canvas-workspace">
+            <div class="canvas-toolbar">
+                <div class="canvas-tag">Lienzo Visual de Topología Multi-Agente</div>
+                <div class="canvas-controls">
+                    <span class="control-tip">Arrastra elementos • Haz clic en un nodo para configurarlo</span>
+                </div>
+            </div>
+
+            <!-- Contenedor del Canvas -->
+            <div id="drop-canvas" class="canvas-grid-bg">
+                <!-- SVG de Conectores -->
+                <svg id="svg-connectors" class="svg-wire-overlay"></svg>
+                
+                <!-- Los nodos se inyectan dinámicamente aquí -->
+            </div>
+        </main>
+
+        <!-- Panel Lateral Derecho: Inspector y Redactor de Tareas -->
+        <aside class="sidebar-inspector">
+            <div class="tabs-nav">
+                <button class="tab-btn active" data-tab="tab-task">Redactar Tarea</button>
+                <button class="tab-btn" data-tab="tab-node">Propiedades</button>
+                <button class="tab-btn" data-tab="tab-kanban">Kanban</button>
+            </div>
+
+            <!-- Tab 1: Redactar y Despachar Tareas -->
+            <div id="tab-task" class="tab-pane active">
+                <div class="section-title">Despachador de Tareas Inteligente</div>
+                <p class="section-hint">El clasificador asignará automáticamente el dominio y balanceará el esfuerzo entre agentes:</p>
+
+                <div class="form-group">
+                    <label>Título de la Tarea:</label>
+                    <input type="text" id="task-title" class="form-control" placeholder="Ej. Auditar contrato de API REST...">
+                </div>
+
+                <div class="form-group">
+                    <label>Instrucciones Detalladas (Markdown / Texto):</label>
+                    <textarea id="task-desc" class="form-control text-mono" rows="6" placeholder="Describe la tarea que el enjambre de agentes debe resolver..."></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>Prioridad:</label>
+                    <select id="task-priority" class="form-control">
+                        <option value="1">1 - Crítica (Despacho Inmediato)</option>
+                        <option value="2">2 - Alta</option>
+                        <option value="3" selected>3 - Normal</option>
+                        <option value="4">4 - Media-Baja</option>
+                        <option value="5">5 - Trivial</option>
+                    </select>
+                </div>
+
+                <button id="btn-dispatch-task" class="btn btn-primary btn-block">
+                    ⚡ Despachar al Balanceador de Carga
+                </button>
+            </div>
+
+            <!-- Tab 2: Inspector de Nodo Seleccionado -->
+            <div id="tab-node" class="tab-pane">
+                <div class="section-title">Propiedades del Nodo</div>
+                <div id="inspector-empty" class="text-muted">Selecciona un nodo en el lienzo para inspeccionar y editar sus directrices.</div>
+                <div id="inspector-content" style="display: none;">
+                    <div class="form-group">
+                        <label>Nombre del Nodo:</label>
+                        <input type="text" id="node-name" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label>Rol del Alma (Soul):</label>
+                        <input type="text" id="node-role" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label>Capacidad Máxima de Esfuerzo:</label>
+                        <input type="number" id="node-max-effort" class="form-control" value="20">
+                    </div>
+                    <div class="form-group">
+                        <label>System Prompt (Soul Content):</label>
+                        <textarea id="node-soul" class="form-control text-mono" rows="5"></textarea>
+                    </div>
+                    <button id="btn-save-node" class="btn btn-secondary btn-block">Guardar Cambios</button>
+                </div>
+            </div>
+
+            <!-- Tab 3: Tablero Kanban Drag & Drop -->
+            <div id="tab-kanban" class="tab-pane">
+                <div class="section-title">Distribución de Brechas (Kanban)</div>
+                <div class="kanban-mini-board">
+                    <div class="kanban-col" data-col="PENDING">
+                        <div class="kanban-header">Pendientes (<span id="count-pending">0</span>)</div>
+                        <div id="kanban-pending-list" class="kanban-dropzone"></div>
+                    </div>
+                    <div class="kanban-col" data-col="IN_PROGRESS">
+                        <div class="kanban-header">En Proceso (<span id="count-progress">0</span>)</div>
+                        <div id="kanban-progress-list" class="kanban-dropzone"></div>
+                    </div>
+                    <div class="kanban-col" data-col="COMPLETED">
+                        <div class="kanban-header">Completadas (<span id="count-completed">0</span>)</div>
+                        <div id="kanban-completed-list" class="kanban-dropzone"></div>
+                    </div>
+                </div>
+            </div>
+        </aside>
+    </div>
+
+    <!-- Panel Inferior: Consola de Traza de Razonamiento (CoT) y Salida -->
+    <footer class="app-console">
+        <div class="console-header">
+            <span class="console-title">🖥️ Consola de Ejecución en Tiempo Real y Traza Criptográfica de Agentes</span>
+            <button id="btn-clear-console" class="btn-xs">Limpiar Consola</button>
+        </div>
+        <div id="console-logs" class="console-body text-mono">
+            <div class="log-line text-info">[Sistema] Agentic Brain Core v1.0.0 inicializado. Listo para orquestar.</div>
+            <div class="log-line text-muted">[Init] Protocolo MessageEnvelope activo. Hashing SHA-256 habilitado.</div>
+            <div class="log-line text-success">[Clúster] Agentes registrados: Architect (UTP), QA Auditor, Backend Specialist.</div>
+        </div>
+    </footer>
+
+    <script src="/static/js/studio.js"></script>
+</body>
+</html>
